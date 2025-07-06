@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestor de Finanzas</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.5.25/dist/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f0f2f5;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+    header { text-align: center; margin-bottom: 30px; }
+    header h1 { color: #0d6efd; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 20px;
+    }
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    }
+    h2 { margin-top: 0; }
+    input, select, textarea, button {
+      width: 100%;
+      margin: 8px 0;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    button {
+      background: #0d6efd;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    button:hover { background: #0b5ed7; }
+    ul { list-style: none; padding: 0; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th, td {
+      border: 1px solid #e0e0e0;
+      padding: 10px;
+      text-align: left;
+    }
+    th { background-color: #f8f9fa; }
+    .negative { color: #dc3545; }
+    .positive { color: #198754; }
+    .traslado { color: #6c757d; }
+    .filter-section {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 600px) {
+      table, thead, tbody, th, td, tr { display: block; }
+      tr { margin-bottom: 1rem; }
+      td { padding-left: 50%; position: relative; }
+      td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 10px;
+        font-weight: bold;
+        text-transform: capitalize;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>💼 Gestor de Finanzas Familiares</h1>
+    <p>Controla tarjetas, gastos, abonos y traslados entre cuentas. Todo desde tu navegador.</p>
+  </header>
+  <div class="grid">
+    <div class="card">
+      <h2>➕ Agregar Tarjeta</h2>
+      <input type="text" id="nuevaTarjeta" placeholder="Nombre de la tarjeta">
+      <input type="number" id="saldoInicial" placeholder="Saldo inicial ($)">
+      <button onclick="agregarTarjeta()">Guardar tarjeta</button>
+    </div>
+    <div class="card">
+      <h2>📌 Registrar Transacción</h2>
+      <select id="tarjetaOrigen"></select>
+      <select id="tipoTransaccion">
+        <option value="gasto">Gasto</option>
+        <option value="abono">Abono</option>
+        <option value="traslado">Traslado entre tarjetas</option>
+      </select>
+      <input type="number" id="monto" placeholder="Monto ($)">
+      <select id="tarjetaDestino" style="display:none;"></select>
+      <input type="text" id="persona" placeholder="Persona (ej. Mamá, Jesús)">
+      <input type="text" id="categoria" placeholder="Categoría (ej. comida, salud)">
+      <textarea id="comentario" placeholder="Comentario adicional"></textarea>
+      <button onclick="registrarTransaccion()">Guardar transacción</button>
+    </div>
+    <div class="card">
+      <h2>💳 Tarjetas y Saldos</h2>
+      <ul id="listaTarjetas"></ul>
+    </div>
+    <div class="card">
+      <h2>📊 Resumen Financiero</h2>
+      <p><strong>Gastos Totales:</strong> <span id="gastosTotales">$0.00</span></p>
+      <p><strong>Ingresos Totales:</strong> <span id="ingresosTotales">$0.00</span></p>
+      <p><strong>Balance General:</strong> <span id="balanceGeneral">$0.00</span></p>
+    </div>
+    <div class="card">
+      <h2>📈 Evolución de Saldos</h2>
+      <canvas id="graficaLinea" style="max-height: 300px;"></canvas>
+    </div>
+    <div class="card" style="grid-column: 1/-1">
+      <h2>📋 Historial de Transacciones</h2>
+      <div class="filter-section">
+        <select id="filtroPersona" onchange="actualizarUI()">
+          <option value="">Todas las personas</option>
+        </select>
+        <button onclick="exportarAExcel()">Exportar a Excel</button>
+        <button onclick="exportarAPDF()">Exportar a PDF</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Tarjeta</th>
+            <th>Tipo</th>
+            <th>Monto</th>
+            <th>Persona</th>
+            <th>Categoría</th>
+            <th>Comentario</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tablaTransacciones"></tbody>
+      </table>
+    </div>
+  </div>
+<script>
+let tarjetas = JSON.parse(localStorage.getItem('tarjetas')) || [];
+let transacciones = JSON.parse(localStorage.getItem('transacciones')) || [];
+
+function guardarDatos() {
+  localStorage.setItem('tarjetas', JSON.stringify(tarjetas));
+  localStorage.setItem('transacciones', JSON.stringify(transacciones));
+}
+
+function calcularResumenFinanciero() {
+  let gastosTotales = 0;
+  let ingresosTotales = 0;
+
+  transacciones.forEach(tx => {
+    if (tx.tipo === 'gasto') {
+      gastosTotales += tx.monto;
+    } else if (tx.tipo === 'abono') {
+      ingresosTotales += tx.monto;
+    }
+  });
+
+  const balanceGeneral = ingresosTotales - gastosTotales;
+
+  document.getElementById('gastosTotales').textContent = `$${gastosTotales.toFixed(2)}`;
+  document.getElementById('ingresosTotales').textContent = `$${ingresosTotales.toFixed(2)}`;
+  document.getElementById('balanceGeneral').textContent = `$${balanceGeneral.toFixed(2)}`;
+}
+
+function actualizarUI() {
+  const listaTarjetas = document.getElementById('listaTarjetas');
+  const tarjetaOrigen = document.getElementById('tarjetaOrigen');
+  const tarjetaDestino = document.getElementById('tarjetaDestino');
+  const tablaTransacciones = document.getElementById('tablaTransacciones');
+  const filtroPersona = document.getElementById('filtroPersona');
+  listaTarjetas.innerHTML = '';
+  tarjetaOrigen.innerHTML = '';
+  tarjetaDestino.innerHTML = '';
+  tablaTransacciones.innerHTML = '';
+  filtroPersona.innerHTML = '<option value="">Todas las personas</option>';
+  const personas = new Set();
+  tarjetas.forEach((t, i) => {
+    listaTarjetas.innerHTML += `<li><strong>${t.nombre}:</strong> $${t.saldo.toFixed(2)} <button onclick="eliminarTarjeta(${i})">Eliminar</button></li>`;
+    tarjetaOrigen.innerHTML += `<option value="${i}">${t.nombre}</option>`;
+    tarjetaDestino.innerHTML += `<option value="${i}">${t.nombre}</option>`;
+  });
+  transacciones.forEach(tx => {
+    if (tx.persona) personas.add(tx.persona);
+  });
+  personas.forEach(persona => {
+    filtroPersona.innerHTML += `<option value="${persona}">${persona}</option>`;
+  });
+  const personaSeleccionada = filtroPersona.value;
+  transacciones.slice().reverse().forEach((tx, index) => {
+    if (!personaSeleccionada || tx.persona === personaSeleccionada) {
+      tablaTransacciones.innerHTML += `
+        <tr>
+          <td>${new Date(tx.fecha).toLocaleString()}</td>
+          <td>${tx.tarjetaNombre}</td>
+          <td class="${tx.tipo}">${tx.tipo}</td>
+          <td class="${tx.tipo === 'gasto' ? 'negative' : tx.tipo === 'abono' ? 'positive' : 'traslado'}">$${tx.monto.toFixed(2)}</td>
+          <td>${tx.persona || '-'}</td>
+          <td>${tx.categoria || '-'}</td>
+          <td>${tx.comentario || '-'}</td>
+          <td><button onclick="eliminarTransaccion(${transacciones.length - 1 - index})">Eliminar</button></td>
+        </tr>
+      `;
+    }
+  });
+  calcularResumenFinanciero();
+  actualizarGraficaLinea();
+}
+
+function agregarTarjeta() {
+  const nombre = document.getElementById('nuevaTarjeta').value.trim();
+  const saldo = parseFloat(document.getElementById('saldoInicial').value);
+  if (!nombre || isNaN(saldo)) return alert('Completa los campos correctamente');
+  tarjetas.push({ nombre, saldo });
+  guardarDatos();
+  actualizarUI();
+  document.getElementById('nuevaTarjeta').value = '';
+  document.getElementById('saldoInicial').value = '';
+}
+
+function eliminarTarjeta(index) {
+  tarjetas.splice(index, 1);
+  guardarDatos();
+  actualizarUI();
+}
+
+function registrarTransaccion() {
+  const tipo = document.getElementById('tipoTransaccion').value;
+  const indexOrigen = parseInt(document.getElementById('tarjetaOrigen').value);
+  const indexDestino = parseInt(document.getElementById('tarjetaDestino').value);
+  const monto = parseFloat(document.getElementById('monto').value);
+  const persona = document.getElementById('persona').value.trim();
+  const categoria = document.getElementById('categoria').value.trim();
+  const comentario = document.getElementById('comentario').value.trim();
+  const fecha = new Date().toISOString();
+  if (isNaN(monto) || monto <= 0) return alert('Monto inválido');
+  if (tipo === 'traslado') {
+    if (indexOrigen === indexDestino) return alert('Tarjetas deben ser distintas');
+    tarjetas[indexOrigen].saldo -= monto;
+    tarjetas[indexDestino].saldo += monto;
+    transacciones.push({
+      fecha,
+      tipo: 'traslado',
+      tarjetaNombre: `${tarjetas[indexOrigen].nombre} → ${tarjetas[indexDestino].nombre}`,
+      monto,
+      persona,
+      categoria,
+      comentario: comentario || 'Traslado entre tarjetas'
+    });
+  } else {
+    const tarjeta = tarjetas[indexOrigen];
+    if (tipo === 'gasto') tarjeta.saldo -= monto;
+    else if (tipo === 'abono') tarjeta.saldo += monto;
+    transacciones.push({
+      fecha,
+      tipo,
+      tarjetaNombre: tarjeta.nombre,
+      monto,
+      persona,
+      categoria,
+      comentario
+    });
+  }
+  guardarDatos();
+  actualizarUI();
+  document.getElementById('monto').value = '';
+  document.getElementById('comentario').value = '';
+  document.getElementById('persona').value = '';
+  document.getElementById('categoria').value = '';
+}
+
+function eliminarTransaccion(index) {
+  transacciones.splice(index, 1);
+  guardarDatos();
+  actualizarUI();
+}
+
+function actualizarGraficaLinea() {
+  const ctx = document.getElementById('graficaLinea').getContext('2d');
+  const tarjetasMap = {};
+  tarjetas.forEach(t => tarjetasMap[t.nombre] = []);
+  transacciones.forEach(tx => {
+    if (tx.tipo !== 'traslado' && tarjetasMap[tx.tarjetaNombre]) {
+      const prev = tarjetasMap[tx.tarjetaNombre].length > 0
+        ? tarjetasMap[tx.tarjetaNombre][tarjetasMap[tx.tarjetaNombre].length - 1].saldo
+        : tarjetas.find(t => t.nombre === tx.tarjetaNombre)?.saldo || 0;
+      const nuevoSaldo = tx.tipo === 'gasto' ? prev - tx.monto : prev + tx.monto;
+      tarjetasMap[tx.tarjetaNombre].push({ fecha: tx.fecha, saldo: nuevoSaldo });
+    }
+  });
+  const datasets = Object.entries(tarjetasMap).map(([tarjeta, datos]) => ({
+    label: tarjeta,
+    data: datos.map(d => ({ x: new Date(d.fecha), y: d.saldo })),
+    fill: false,
+    tension: 0.3,
+    borderWidth: 2
+  }));
+  if (window.lineaGastos) {
+    window.lineaGastos.destroy();
+  }
+  window.lineaGastos = new Chart(ctx, {
+    type: 'line',
+    data: { datasets },
+    options: {
+      responsive: true,
+      scales: {
+        x: { type: 'time', time: { unit: 'day' }, title: { display: true, text: 'Fecha' } },
+        y: { beginAtZero: false, title: { display: true, text: 'Saldo ($)' } }
+      },
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: ctx => `${ctx.dataset.label}: $${ctx.parsed.y.toFixed(2)}`
+          }
+        }
+      }
+    }
+  });
+}
+
+document.getElementById('tipoTransaccion').addEventListener('change', (e) => {
+  const tarjetaDestino = document.getElementById('tarjetaDestino');
+  tarjetaDestino.style.display = e.target.value === 'traslado' ? 'block' : 'none';
+});
+
+function exportarAExcel() {
+  const tabla = document.getElementById('tablaTransacciones');
+  const wb = XLSX.utils.table_to_book(tabla);
+  XLSX.writeFile(wb, 'Historial_Transacciones.xlsx');
+}
+
+async function exportarAPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  doc.autoTable({
+    html: '#tablaTransacciones',
+    head: [['Fecha', 'Tarjeta', 'Tipo', 'Monto', 'Persona', 'Categoría', 'Comentario']],
+    body: Array.from(document.querySelectorAll('#tablaTransacciones tr')).map(tr => {
+      return Array.from(tr.querySelectorAll('td')).map(td => td.innerText);
+    }),
+  });
+
+  doc.save('Historial_Transacciones.pdf');
+}
+
+actualizarUI();
+</script>
+</body>
+</html>
