@@ -3,269 +3,980 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gestor de Finanzas</title>
+  <title>Gestor de Finanzas Familiares Avanzado</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.5.25/dist/jspdf.plugin.autotable.min.js"></script>
-  <style>
-    * { box-sizing: border-box; }
+  <script src="https://cdn.jsdelivr.net/npm/luxon@3.0.1/build/global/luxon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+ <style>
+    :root {
+        --primary: #4361ee;
+        --primary-dark: #3a56d4;
+        --secondary: #3f37c9;
+        --success: #4cc9f0;
+        --danger: #f72585;
+        --warning: #f8961e;
+        --info: #4895ef;
+        --light: #f8f9fa;
+        --dark: #212529;
+        --gray: #6c757d;
+        --gray-light: #e9ecef;
+    }
+    
+    * { 
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+    
     body {
-      font-family: 'Inter', sans-serif;
-      background: #f0f2f5;
-      margin: 0;
-      padding: 20px;
-      color: #333;
+        font-family: 'Inter', sans-serif;
+        background: #f5f7fa;
+        margin: 0;
+        padding: 20px;
+        color: var(--dark);
+        line-height: 1.6;
     }
-    header { text-align: center; margin-bottom: 30px; }
-    header h1 { color: #0d6efd; }
+    
+    header { 
+        text-align: center; 
+        margin-bottom: 30px;
+        padding: 20px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+    
+    header h1 { 
+        color: var(--primary);
+        font-size: 2.2rem;
+        margin-bottom: 10px;
+    }
+    
+    header p {
+        color: var(--gray);
+        font-size: 1.1rem;
+    }
+    
     .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 20px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
     }
+    
     .card {
-      background: white;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
-    h2 { margin-top: 0; }
+    
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    
+    .card h2 {
+        margin-top: 0;
+        margin-bottom: 20px;
+        color: var(--primary);
+        font-size: 1.4rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
     input, select, textarea, button {
-      width: 100%;
-      margin: 8px 0;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      font-size: 14px;
+        width: 100%;
+        margin: 8px 0;
+        padding: 12px 15px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 15px;
+        transition: border-color 0.3s;
     }
+    
+    input:focus, select:focus, textarea:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+    }
+    
     button {
-      background: #0d6efd;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-      transition: 0.3s;
+        background: var(--primary);
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.3s;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
     }
-    button:hover { background: #0b5ed7; }
-    ul { list-style: none; padding: 0; }
+    
+    button:hover { 
+        background: var(--primary-dark);
+        transform: translateY(-2px);
+    }
+    
+    button.secondary {
+        background: var(--gray);
+    }
+    
+    button.secondary:hover {
+        background: #5a6268;
+    }
+    
+    button.danger {
+        background: var(--danger);
+    }
+    
+    button.danger:hover {
+        background: #c82333;
+    }
+    
+    button.success {
+        background: #28a745;
+    }
+    
+    button.success:hover {
+        background: #218838;
+    }
+    
+    button.warning {
+        background: var(--warning);
+        color: var(--dark);
+    }
+    
+    button.warning:hover {
+        background: #e0870f;
+    }
+    
+    ul { 
+        list-style: none; 
+        padding: 0; 
+    }
+    
     table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        font-size: 14px;
+        background: white;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 0 0 1px #eee;
     }
+    
     th, td {
-      border: 1px solid #e0e0e0;
-      padding: 10px;
-      text-align: left;
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid #eee;
     }
-    th { background-color: #f8f9fa; }
-    .negative { color: #dc3545; }
-    .positive { color: #198754; }
-    .traslado { color: #6c757d; }
+    
+    th { 
+        background-color: var(--primary);
+        color: white;
+        font-weight: 600;
+        position: sticky;
+        top: 0;
+    }
+    
+    tr:hover {
+        background-color: rgba(67, 97, 238, 0.05);
+    }
+    
+    tr:last-child td {
+        border-bottom: none;
+    }
+    
+    .negative { color: var(--danger); }
+    .positive { color: #28a745; }
+    .traslado { color: var(--gray); }
+    
     .filter-section {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 20px;
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
     }
-    @media (max-width: 600px) {
-      table, thead, tbody, th, td, tr { display: block; }
-      tr { margin-bottom: 1rem; }
-      td { padding-left: 50%; position: relative; }
-      td::before {
-        content: attr(data-label);
-        position: absolute;
-        left: 10px;
+    
+    .filter-section > * {
+        flex: 1 1 200px;
+        min-width: 0;
+    }
+    
+    .tab-container {
+        display: flex;
+        margin-bottom: 15px;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .tab {
+        padding: 10px 20px;
+        cursor: pointer;
+        background: transparent;
+        border-radius: 5px 5px 0 0;
+        margin-right: 5px;
+        font-weight: 500;
+        color: var(--gray);
+        transition: all 0.3s;
+        border-bottom: 3px solid transparent;
+    }
+    
+    .tab:hover {
+        color: var(--primary);
+    }
+    
+    .tab.active {
+        color: var(--primary);
+        border-bottom: 3px solid var(--primary);
+        font-weight: 600;
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 300px;
+        width: 100%;
+        margin-top: 15px;
+    }
+    
+    .badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        background: var(--gray-light);
+        color: var(--dark);
+    }
+    
+    .badge.primary {
+        background: var(--primary);
+        color: white;
+    }
+    
+    .badge.success {
+        background: #28a745;
+        color: white;
+    }
+    
+    .badge.danger {
+        background: var(--danger);
+        color: white;
+    }
+    
+    .badge.warning {
+        background: var(--warning);
+        color: var(--dark);
+    }
+    
+    .badge.info {
+        background: var(--info);
+        color: white;
+    }
+    
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0,0,0,0.4);
+        backdrop-filter: blur(5px);
+    }
+    
+    .modal-content {
+        background-color: white;
+        margin: 10% auto;
+        padding: 25px;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 600px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        animation: modalFadeIn 0.3s;
+    }
+    
+    @keyframes modalFadeIn {
+        from { opacity: 0; transform: translateY(-20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .close {
+        color: var(--gray);
+        float: right;
+        font-size: 28px;
         font-weight: bold;
-        text-transform: capitalize;
-      }
+        cursor: pointer;
+        transition: color 0.3s;
     }
-  </style>
+    
+    .close:hover {
+        color: var(--dark);
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 10px;
+        padding: 15px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        text-align: center;
+        transition: transform 0.3s;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-3px);
+    }
+    
+    .stat-card h3 {
+        margin: 0;
+        font-size: 14px;
+        color: var(--gray);
+        font-weight: 500;
+    }
+    
+    .stat-card p {
+        margin: 10px 0 0;
+        font-size: 22px;
+        font-weight: 700;
+    }
+    
+    .progress-container {
+        width: 100%;
+        background-color: var(--gray-light);
+        border-radius: 5px;
+        margin: 10px 0;
+        height: 10px;
+        overflow: hidden;
+    }
+    
+    .progress-bar {
+        height: 100%;
+        border-radius: 5px;
+        background-color: var(--primary);
+        transition: width 0.5s ease;
+    }
+    
+    .category-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 5px;
+        align-items: center;
+    }
+    
+    .category-name {
+        flex: 1;
+        font-weight: 500;
+    }
+    
+    .category-amount {
+        flex: 0 0 120px;
+        text-align: right;
+        font-weight: 600;
+    }
+    
+    .tooltip {
+        position: relative;
+        display: inline-block;
+    }
+    
+    .tooltip .tooltiptext {
+        visibility: hidden;
+        width: 200px;
+        background-color: var(--dark);
+        color: white;
+        text-align: center;
+        border-radius: 6px;
+        padding: 8px;
+        position: absolute;
+        z-index: 1;
+        bottom: 125%;
+        left: 50%;
+        margin-left: -100px;
+        opacity: 0;
+        transition: opacity 0.3s;
+        font-size: 13px;
+        font-weight: normal;
+    }
+    
+    .tooltip:hover .tooltiptext {
+        visibility: visible;
+        opacity: 1;
+    }
+    
+    .table-responsive {
+        overflow-x: auto;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        box-shadow: 0 0 0 1px #eee;
+    }
+    
+    .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 15px;
+        margin-top: 20px;
+    }
+    
+    .pagination-info {
+        font-size: 14px;
+        color: var(--gray);
+    }
+    
+    /* Animaciones */
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    .fade-in {
+        animation: fadeIn 0.5s ease-in;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .filter-section > * {
+            flex: 1 1 100%;
+        }
+        
+        .modal-content {
+            width: 95%;
+            margin: 20% auto;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        body {
+            padding: 10px;
+        }
+        
+        header h1 {
+            font-size: 1.8rem;
+        }
+        
+        .card {
+            padding: 20px 15px;
+        }
+        
+        th, td {
+            padding: 8px 10px;
+            font-size: 13px;
+        }
+        
+        .stats-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+</style>
 </head>
 <body>
   <header>
-    <h1>💼 Gestor de Finanzas Familiares</h1>
-    <p>Controla tarjetas, gastos, abonos y traslados entre cuentas. Todo desde tu navegador.</p>
+    <h1><i class="fas fa-wallet"></i> Gestor de Finanzas Familiares Avanzado</h1>
+    <p>Control completo de tus finanzas familiares con análisis detallados y reportes personalizados</p>
   </header>
+  
   <div class="grid">
+    <!-- Tarjetas -->
     <div class="card">
-      <h2>➕ Agregar Tarjeta</h2>
-      <input type="text" id="nuevaTarjeta" placeholder="Nombre de la tarjeta">
-      <input type="number" id="saldoInicial" placeholder="Saldo inicial ($)">
-      <button onclick="agregarTarjeta()">Guardar tarjeta</button>
+      <h2><i class="fas fa-credit-card"></i> Administrar Tarjetas</h2>
+      <div class="tab-container">
+        <div class="tab active" onclick="showTab('add-card')">Agregar</div>
+        <div class="tab" onclick="showTab('edit-cards')">Editar</div>
+      </div>
+      
+      <div id="add-card" class="tab-content">
+        <input type="text" id="nuevaTarjeta" placeholder="Nombre de la tarjeta">
+        <input type="number" id="saldoInicial" placeholder="Saldo inicial ($)">
+        <select id="tipoTarjeta">
+          <option value="credito">Tarjeta de Crédito</option>
+          <option value="debito">Tarjeta de Débito</option>
+          <option value="efectivo">Efectivo</option>
+          <option value="ahorro">Cuenta de Ahorro</option>
+          <option value="inversion">Inversión</option>
+        </select>
+        <input type="text" id="bancoTarjeta" placeholder="Banco (opcional)">
+        <button onclick="agregarTarjeta()" class="success"><i class="fas fa-save"></i> Guardar tarjeta</button>
+      </div>
+      
+      <div id="edit-cards" class="tab-content" style="display:none;">
+        <ul id="listaTarjetasEditar"></ul>
+      </div>
     </div>
+    
+    <!-- Transacciones -->
     <div class="card">
-      <h2>📌 Registrar Transacción</h2>
-      <select id="tarjetaOrigen"></select>
+      <h2><i class="fas fa-exchange-alt"></i> Registrar Transacción</h2>
       <select id="tipoTransaccion">
         <option value="gasto">Gasto</option>
         <option value="abono">Abono</option>
         <option value="traslado">Traslado entre tarjetas</option>
       </select>
-      <input type="number" id="monto" placeholder="Monto ($)">
-      <select id="tarjetaDestino" style="display:none;"></select>
-      <input type="text" id="persona" placeholder="Persona (ej. Yo, Pepito, Pelos)">
-      <input type="text" id="categoria" placeholder="Categoría (ej. comida, salud)">
+      <div id="origen-container">
+        <select id="tarjetaOrigen"></select>
+      </div>
+      <div id="destino-container" style="display:none;">
+        <select id="tarjetaDestino"></select>
+      </div>
+      <input type="number" id="monto" placeholder="Monto ($)" step="0.01">
+      <input type="date" id="fechaTransaccion">
+      <select id="persona">
+        <option value="">Seleccionar persona</option>
+      </select>
+      <button onclick="mostrarModalAgregarPersona()" class="secondary" style="margin-top: -5px; margin-bottom: 5px;">
+        <i class="fas fa-user-plus"></i> Agregar persona
+      </button>
+      <select id="categoria">
+        <option value="">Seleccionar categoría</option>
+      </select>
+      <button onclick="mostrarModalAgregarCategoria()" class="secondary" style="margin-top: -5px; margin-bottom: 5px;">
+        <i class="fas fa-tag"></i> Agregar categoría
+      </button>
       <textarea id="comentario" placeholder="Comentario adicional"></textarea>
-      <button onclick="registrarTransaccion()">Guardar transacción</button>
+      <button onclick="registrarTransaccion()" class="success"><i class="fas fa-save"></i> Guardar transacción</button>
     </div>
+    
+    <!-- Resumen Financiero -->
     <div class="card">
-      <h2>💳 Tarjetas y Saldos</h2>
+      <h2><i class="fas fa-chart-pie"></i> Resumen Financiero</h2>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <h3>Gastos Totales</h3>
+          <p id="gastosTotales">$0.00</p>
+        </div>
+        <div class="stat-card">
+          <h3>Ingresos Totales</h3>
+          <p id="ingresosTotales">$0.00</p>
+        </div>
+        <div class="stat-card">
+          <h3>Balance General</h3>
+          <p id="balanceGeneral">$0.00</p>
+        </div>
+        <div class="stat-card">
+          <h3>Saldo Total</h3>
+          <p id="saldoTotal">$0.00</p>
+        </div>
+      </div>
+      <div id="graficoDonutContainer" class="chart-container">
+        <canvas id="graficaDonut"></canvas>
+      </div>
+    </div>
+    
+    <!-- Tarjetas y Saldos -->
+    <div class="card">
+      <h2><i class="fas fa-credit-card"></i> Tarjetas y Saldos</h2>
       <ul id="listaTarjetas"></ul>
+      <button onclick="mostrarModalImportar()" class="secondary"><i class="fas fa-file-import"></i> Importar datos</button>
+      <button onclick="exportarBackup()" class="secondary"><i class="fas fa-file-export"></i> Exportar backup</button>
     </div>
+    
+    <!-- Evolución de Saldos -->
     <div class="card">
-      <h2>📊 Resumen Financiero</h2>
-      <p><strong>Gastos Totales:</strong> <span id="gastosTotales">$0.00</span></p>
-      <p><strong>Ingresos Totales:</strong> <span id="ingresosTotales">$0.00</span></p>
-      <p><strong>Balance General:</strong> <span id="balanceGeneral">$0.00</span></p>
-    </div>
-    <div class="card">
-      <h2>📈 Evolución de Saldos</h2>
-      <canvas id="graficaLinea" style="max-height: 300px;"></canvas>
-    </div>
-    <div class="card" style="grid-column: 1/-1">
-      <h2>📋 Historial de Transacciones</h2>
+      <h2><i class="fas fa-chart-line"></i> Evolución de Saldos</h2>
       <div class="filter-section">
-        <select id="filtroPersona" onchange="actualizarUI()">
+        <select id="filtroGraficaTarjeta" onchange="actualizarGraficas()">
+          <option value="">Todas las tarjetas</option>
+        </select>
+        <select id="filtroGraficaPeriodo" onchange="actualizarGraficas()">
+          <option value="7">Últimos 7 días</option>
+          <option value="30" selected>Últimos 30 días</option>
+          <option value="90">Últimos 3 meses</option>
+          <option value="365">Último año</option>
+          <option value="0">Todo el período</option>
+        </select>
+      </div>
+      <div class="chart-container">
+        <canvas id="graficaLinea"></canvas>
+      </div>
+    </div>
+    
+    <!-- Análisis de Gastos -->
+    <div class="card">
+      <h2><i class="fas fa-chart-bar"></i> Análisis de Gastos</h2>
+      <div class="filter-section">
+        <select id="filtroGastosPersona" onchange="actualizarGraficas()">
           <option value="">Todas las personas</option>
         </select>
-        <button onclick="exportarAExcel()">Exportar a Excel</button>
-        <button onclick="exportarAPDF()">Exportar a PDF</button>
+        <select id="filtroGastosPeriodo" onchange="actualizarGraficas()">
+          <option value="7">Últimos 7 días</option>
+          <option value="30" selected>Últimos 30 días</option>
+          <option value="90">Últimos 3 meses</option>
+          <option value="365">Último año</option>
+          <option value="0">Todo el período</option>
+        </select>
       </div>
-      <table>
-        <thead>
-          <tr>
-            <th>Fecha</th>
-            <th>Tarjeta</th>
-            <th>Tipo</th>
-            <th>Monto</th>
-            <th>Persona</th>
-            <th>Categoría</th>
-            <th>Comentario</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody id="tablaTransacciones"></tbody>
-      </table>
+      <div class="chart-container">
+        <canvas id="graficaBarras"></canvas>
+      </div>
+    </div>
+    
+    <!-- Historial de Transacciones -->
+    <div class="card" style="grid-column: 1/-1">
+      <h2><i class="fas fa-history"></i> Historial de Transacciones</h2>
+      <div class="filter-section">
+        <select id="filtroPersona" onchange="filtrarTransacciones()">
+          <option value="">Todas las personas</option>
+        </select>
+        <select id="filtroCategoria" onchange="filtrarTransacciones()">
+          <option value="">Todas las categorías</option>
+        </select>
+        <select id="filtroTarjeta" onchange="filtrarTransacciones()">
+          <option value="">Todas las tarjetas</option>
+        </select>
+        <select id="filtroTipo" onchange="filtrarTransacciones()">
+          <option value="">Todos los tipos</option>
+          <option value="gasto">Gastos</option>
+          <option value="abono">Abonos</option>
+          <option value="traslado">Traslados</option>
+        </select>
+        <input type="date" id="filtroFechaInicio" onchange="filtrarTransacciones()" placeholder="Fecha inicio">
+        <input type="date" id="filtroFechaFin" onchange="filtrarTransacciones()" placeholder="Fecha fin">
+        <input type="number" id="filtroMontoMin" onchange="filtrarTransacciones()" placeholder="Monto mínimo" step="0.01">
+        <input type="number" id="filtroMontoMax" onchange="filtrarTransacciones()" placeholder="Monto máximo" step="0.01">
+      </div>
+      <div class="filter-section">
+        <button onclick="exportarAExcel()" class="secondary"><i class="fas fa-file-excel"></i> Exportar a Excel</button>
+        <button onclick="exportarAPDF()" class="secondary"><i class="fas fa-file-pdf"></i> Exportar a PDF</button>
+        <button onclick="mostrarModalResumen()" class="secondary"><i class="fas fa-chart-bar"></i> Ver resumen</button>
+        <button onclick="limpiarFiltros()" class="secondary"><i class="fas fa-broom"></i> Limpiar filtros</button>
+      </div>
+      <div style="overflow-x: auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha <button onclick="ordenarPor('fecha')"><i class="fas fa-sort"></i></button></th>
+              <th>Tarjeta <button onclick="ordenarPor('tarjetaNombre')"><i class="fas fa-sort"></i></button></th>
+              <th>Tipo <button onclick="ordenarPor('tipo')"><i class="fas fa-sort"></i></button></th>
+              <th>Monto <button onclick="ordenarPor('monto')"><i class="fas fa-sort"></i></button></th>
+              <th>Persona <button onclick="ordenarPor('persona')"><i class="fas fa-sort"></i></button></th>
+              <th>Categoría <button onclick="ordenarPor('categoria')"><i class="fas fa-sort"></i></button></th>
+              <th>Comentario <button onclick="ordenarPor('comentario')"><i class="fas fa-sort"></i></button></th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tablaTransacciones"></tbody>
+        </table>
+      </div>
+      <div style="margin-top: 10px; text-align: center;">
+        <button onclick="cambiarPagina(-1)" class="secondary" id="btnAnterior" disabled><i class="fas fa-arrow-left"></i> Anterior</button>
+        <span id="paginaInfo">Página 1 de 1</span>
+        <button onclick="cambiarPagina(1)" class="secondary" id="btnSiguiente" disabled><i class="fas fa-arrow-right"></i> Siguiente</button>
+      </div>
     </div>
   </div>
+  
+  <!-- Modal Agregar Persona -->
+  <div id="modalAgregarPersona" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="cerrarModal('modalAgregarPersona')">&times;</span>
+      <h2>Agregar Nueva Persona</h2>
+      <input type="text" id="nuevaPersona" placeholder="Nombre de la persona">
+      <button onclick="agregarPersona()" class="success"><i class="fas fa-save"></i> Guardar</button>
+    </div>
+  </div>
+  
+  <!-- Modal Agregar Categoría -->
+  <div id="modalAgregarCategoria" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="cerrarModal('modalAgregarCategoria')">&times;</span>
+      <h2>Agregar Nueva Categoría</h2>
+      <input type="text" id="nuevaCategoria" placeholder="Nombre de la categoría">
+      <select id="tipoCategoria">
+        <option value="gasto">Gasto</option>
+        <option value="ingreso">Ingreso</option>
+      </select>
+      <button onclick="agregarCategoria()" class="success"><i class="fas fa-save"></i> Guardar</button>
+    </div>
+  </div>
+  
+  <!-- Modal Importar Datos -->
+  <div id="modalImportar" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="cerrarModal('modalImportar')">&times;</span>
+      <h2>Importar Datos</h2>
+      <select id="tipoImportacion">
+        <option value="transacciones">Transacciones</option>
+        <option value="tarjetas">Tarjetas</option>
+        <option value="backup">Backup Completo</option>
+      </select>
+      <input type="file" id="archivoImportar" accept=".json,.xlsx,.csv">
+      <div id="opcionesImportacion" style="margin-top: 10px;">
+        <label><input type="checkbox" id="sobrescribirDatos"> Sobrescribir datos existentes</label>
+      </div>
+      <button onclick="importarDatos()" class="success"><i class="fas fa-file-import"></i> Importar</button>
+      <div id="resultadoImportacion" style="margin-top: 10px;"></div>
+    </div>
+  </div>
+  
+  <!-- Modal Resumen -->
+  <div id="modalResumen" class="modal">
+    <div class="modal-content" style="width: 90%; max-width: 800px;">
+      <span class="close" onclick="cerrarModal('modalResumen')">&times;</span>
+      <h2>Resumen de Transacciones</h2>
+      <div class="tab-container">
+        <div class="tab active" onclick="mostrarResumenTab('resumen-categorias')">Por Categoría</div>
+        <div class="tab" onclick="mostrarResumenTab('resumen-personas')">Por Persona</div>
+        <div class="tab" onclick="mostrarResumenTab('resumen-tarjetas')">Por Tarjeta</div>
+        <div class="tab" onclick="mostrarResumenTab('resumen-mensual')">Evolución Mensual</div>
+      </div>
+      
+      <div id="resumen-categorias" class="resumen-tab-content">
+        <h3>Gastos por Categoría</h3>
+        <div id="listaCategoriasGastos"></div>
+        <h3>Ingresos por Categoría</h3>
+        <div id="listaCategoriasIngresos"></div>
+      </div>
+      
+      <div id="resumen-personas" class="resumen-tab-content" style="display:none;">
+        <h3>Gastos por Persona</h3>
+        <div id="listaPersonasGastos"></div>
+        <h3>Ingresos por Persona</h3>
+        <div id="listaPersonasIngresos"></div>
+      </div>
+      
+      <div id="resumen-tarjetas" class="resumen-tab-content" style="display:none;">
+        <h3>Movimientos por Tarjeta</h3>
+        <div id="listaTarjetasResumen"></div>
+      </div>
+      
+      <div id="resumen-mensual" class="resumen-tab-content" style="display:none;">
+        <div class="chart-container" style="height: 400px;">
+          <canvas id="graficaMensual"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Modal Editar Transacción -->
+  <div id="modalEditarTransaccion" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="cerrarModal('modalEditarTransaccion')">&times;</span>
+      <h2>Editar Transacción</h2>
+      <input type="hidden" id="editarTransaccionId">
+      <select id="editarTipoTransaccion">
+        <option value="gasto">Gasto</option>
+        <option value="abono">Abono</option>
+        <option value="traslado">Traslado entre tarjetas</option>
+      </select>
+      <div id="editarOrigen-container">
+        <select id="editarTarjetaOrigen"></select>
+      </div>
+      <div id="editarDestino-container" style="display:none;">
+        <select id="editarTarjetaDestino"></select>
+      </div>
+      <input type="number" id="editarMonto" placeholder="Monto ($)" step="0.01">
+      <input type="date" id="editarFecha">
+      <select id="editarPersona">
+        <option value="">Seleccionar persona</option>
+      </select>
+      <select id="editarCategoria">
+        <option value="">Seleccionar categoría</option>
+      </select>
+      <textarea id="editarComentario" placeholder="Comentario adicional"></textarea>
+      <div style="display: flex; gap: 10px; margin-top: 10px;">
+        <button onclick="guardarEdicionTransaccion()" class="success"><i class="fas fa-save"></i> Guardar</button>
+        <button onclick="cerrarModal('modalEditarTransaccion')" class="secondary"><i class="fas fa-times"></i> Cancelar</button>
+      </div>
+    </div>
+  </div>
+
 <script>
+// Variables globales
 let tarjetas = JSON.parse(localStorage.getItem('tarjetas')) || [];
 let transacciones = JSON.parse(localStorage.getItem('transacciones')) || [];
+let personas = JSON.parse(localStorage.getItem('personas')) || [];
+let categorias = JSON.parse(localStorage.getItem('categorias')) || [
+  { nombre: 'Comida', tipo: 'gasto' },
+  { nombre: 'Transporte', tipo: 'gasto' },
+  { nombre: 'Salud', tipo: 'gasto' },
+  { nombre: 'Educación', tipo: 'gasto' },
+  { nombre: 'Entretenimiento', tipo: 'gasto' },
+  { nombre: 'Salario', tipo: 'ingreso' },
+  { nombre: 'Regalo', tipo: 'ingreso' },
+  { nombre: 'Otros ingresos', tipo: 'ingreso' }
+];
+let paginacion = {
+  paginaActual: 1,
+  itemsPorPagina: 10,
+  transaccionesFiltradas: []
+};
+let orden = {
+  campo: 'fecha',
+  direccion: 'desc'
+};
+
+// Inicialización
+document.addEventListener('DOMContentLoaded', function() {
+  // Establecer fecha actual como valor predeterminado
+  const hoy = new Date().toISOString().split('T')[0];
+  document.getElementById('fechaTransaccion').value = hoy;
+  
+  // Inicializar la aplicación
+  actualizarUI();
+});
 
 function guardarDatos() {
   localStorage.setItem('tarjetas', JSON.stringify(tarjetas));
   localStorage.setItem('transacciones', JSON.stringify(transacciones));
+  localStorage.setItem('personas', JSON.stringify(personas));
+  localStorage.setItem('categorias', JSON.stringify(categorias));
 }
 
-function calcularResumenFinanciero() {
-  let gastosTotales = 0;
-  let ingresosTotales = 0;
-
-  transacciones.forEach(tx => {
-    if (tx.tipo === 'gasto') {
-      gastosTotales += tx.monto;
-    } else if (tx.tipo === 'abono') {
-      ingresosTotales += tx.monto;
-    }
-  });
-
-  const balanceGeneral = ingresosTotales - gastosTotales;
-
-  document.getElementById('gastosTotales').textContent = `$${gastosTotales.toFixed(2)}`;
-  document.getElementById('ingresosTotales').textContent = `$${ingresosTotales.toFixed(2)}`;
-  document.getElementById('balanceGeneral').textContent = `$${balanceGeneral.toFixed(2)}`;
-}
-
-function actualizarUI() {
-  const listaTarjetas = document.getElementById('listaTarjetas');
-  const tarjetaOrigen = document.getElementById('tarjetaOrigen');
-  const tarjetaDestino = document.getElementById('tarjetaDestino');
-  const tablaTransacciones = document.getElementById('tablaTransacciones');
-  const filtroPersona = document.getElementById('filtroPersona');
-  listaTarjetas.innerHTML = '';
-  tarjetaOrigen.innerHTML = '';
-  tarjetaDestino.innerHTML = '';
-  tablaTransacciones.innerHTML = '';
-  filtroPersona.innerHTML = '<option value="">Todas las personas</option>';
-  const personas = new Set();
-  tarjetas.forEach((t, i) => {
-    listaTarjetas.innerHTML += `<li><strong>${t.nombre}:</strong> $${t.saldo.toFixed(2)} <button onclick="eliminarTarjeta(${i})">Eliminar</button></li>`;
-    tarjetaOrigen.innerHTML += `<option value="${i}">${t.nombre}</option>`;
-    tarjetaDestino.innerHTML += `<option value="${i}">${t.nombre}</option>`;
-  });
-  transacciones.forEach(tx => {
-    if (tx.persona) personas.add(tx.persona);
-  });
-  personas.forEach(persona => {
-    filtroPersona.innerHTML += `<option value="${persona}">${persona}</option>`;
-  });
-  const personaSeleccionada = filtroPersona.value;
-  transacciones.slice().reverse().forEach((tx, index) => {
-    if (!personaSeleccionada || tx.persona === personaSeleccionada) {
-      tablaTransacciones.innerHTML += `
-        <tr>
-          <td>${new Date(tx.fecha).toLocaleString()}</td>
-          <td>${tx.tarjetaNombre}</td>
-          <td class="${tx.tipo}">${tx.tipo}</td>
-          <td class="${tx.tipo === 'gasto' ? 'negative' : tx.tipo === 'abono' ? 'positive' : 'traslado'}">$${tx.monto.toFixed(2)}</td>
-          <td>${tx.persona || '-'}</td>
-          <td>${tx.categoria || '-'}</td>
-          <td>${tx.comentario || '-'}</td>
-          <td><button onclick="eliminarTransaccion(${transacciones.length - 1 - index})">Eliminar</button></td>
-        </tr>
-      `;
-    }
-  });
-  calcularResumenFinanciero();
-  actualizarGraficaLinea();
-}
-
+// Funciones para tarjetas
 function agregarTarjeta() {
   const nombre = document.getElementById('nuevaTarjeta').value.trim();
   const saldo = parseFloat(document.getElementById('saldoInicial').value);
-  if (!nombre || isNaN(saldo)) return alert('Completa los campos correctamente');
-  tarjetas.push({ nombre, saldo });
+  const tipo = document.getElementById('tipoTarjeta').value;
+  const banco = document.getElementById('bancoTarjeta').value.trim();
+  
+  if (!nombre || isNaN(saldo)) {
+    alert('Por favor ingresa un nombre válido y un saldo inicial');
+    return;
+  }
+  
+  tarjetas.push({ 
+    nombre, 
+    saldo, 
+    tipo,
+    banco: banco || 'No especificado',
+    fechaCreacion: new Date().toISOString()
+  });
+  
   guardarDatos();
   actualizarUI();
+  
+  // Limpiar campos
   document.getElementById('nuevaTarjeta').value = '';
   document.getElementById('saldoInicial').value = '';
+  document.getElementById('bancoTarjeta').value = '';
+}
+
+function editarTarjeta(index) {
+  const tarjeta = tarjetas[index];
+  const nuevoNombre = prompt('Nuevo nombre para la tarjeta:', tarjeta.nombre);
+  if (nuevoNombre === null) return;
+  
+  const nuevoSaldo = prompt('Nuevo saldo para la tarjeta:', tarjeta.saldo);
+  if (nuevoSaldo === null) return;
+  
+  const saldoNumerico = parseFloat(nuevoSaldo);
+  if (isNaN(saldoNumerico)) {
+    alert('El saldo debe ser un número válido');
+    return;
+  }
+  
+  tarjetas[index].nombre = nuevoNombre.trim();
+  tarjetas[index].saldo = saldoNumerico;
+  guardarDatos();
+  actualizarUI();
 }
 
 function eliminarTarjeta(index) {
+  if (!confirm('¿Estás seguro de eliminar esta tarjeta? Todas las transacciones asociadas también se eliminarán.')) {
+    return;
+  }
+  
+  // Eliminar transacciones asociadas a esta tarjeta
+  const nombreTarjeta = tarjetas[index].nombre;
+  transacciones = transacciones.filter(tx => 
+    tx.tarjetaNombre !== nombreTarjeta && 
+    !tx.tarjetaNombre.includes(`${nombreTarjeta} →`) && 
+    !tx.tarjetaNombre.includes(`→ ${nombreTarjeta}`)
+  );
+  
   tarjetas.splice(index, 1);
   guardarDatos();
   actualizarUI();
 }
 
+// Funciones para transacciones
 function registrarTransaccion() {
   const tipo = document.getElementById('tipoTransaccion').value;
   const indexOrigen = parseInt(document.getElementById('tarjetaOrigen').value);
-  const indexDestino = parseInt(document.getElementById('tarjetaDestino').value);
+  const indexDestino = tipo === 'traslado' ? parseInt(document.getElementById('tarjetaDestino').value) : null;
   const monto = parseFloat(document.getElementById('monto').value);
-  const persona = document.getElementById('persona').value.trim();
-  const categoria = document.getElementById('categoria').value.trim();
+  const persona = document.getElementById('persona').value;
+  const categoria = document.getElementById('categoria').value;
   const comentario = document.getElementById('comentario').value.trim();
-  const fecha = new Date().toISOString();
-  if (isNaN(monto) || monto <= 0) return alert('Monto inválido');
+  const fecha = document.getElementById('fechaTransaccion').value || new Date().toISOString();
+  
+  // Validaciones
+  if (isNaN(monto) || monto <= 0) {
+    alert('Por favor ingresa un monto válido');
+    return;
+  }
+  
   if (tipo === 'traslado') {
-    if (indexOrigen === indexDestino) return alert('Tarjetas deben ser distintas');
+    if (indexOrigen === indexDestino) {
+      alert('No puedes hacer un traslado entre la misma tarjeta');
+      return;
+    }
+    
+    const tarjetaOrigen = tarjetas[indexOrigen];
+    const tarjetaDestino = tarjetas[indexDestino];
+    
+    if (tarjetaOrigen.saldo < monto) {
+      alert(`La tarjeta ${tarjetaOrigen.nombre} no tiene suficiente saldo`);
+      return;
+    }
+    
+    // Actualizar saldos
     tarjetas[indexOrigen].saldo -= monto;
     tarjetas[indexDestino].saldo += monto;
+    
+    // Registrar transacción
     transacciones.push({
       fecha,
       tipo: 'traslado',
-      tarjetaNombre: `${tarjetas[indexOrigen].nombre} → ${tarjetas[indexDestino].nombre}`,
+      tarjetaNombre: `${tarjetaOrigen.nombre} → ${tarjetaDestino.nombre}`,
       monto,
       persona,
       categoria,
-      comentario: comentario || 'Traslado entre tarjetas'
+      comentario: comentario || 'Traslado entre tarjetas',
+      detalles: {
+        origen: tarjetaOrigen.nombre,
+        destino: tarjetaDestino.nombre
+      }
     });
   } else {
     const tarjeta = tarjetas[indexOrigen];
-    if (tipo === 'gasto') tarjeta.saldo -= monto;
-    else if (tipo === 'abono') tarjeta.saldo += monto;
+    
+    if (tipo === 'gasto' && tarjeta.saldo < monto) {
+      if (!confirm(`La tarjeta ${tarjeta.nombre} no tiene suficiente saldo. ¿Deseas registrar el gasto de todas formas?`)) {
+        return;
+      }
+    }
+    
+    // Actualizar saldo
+    if (tipo === 'gasto') {
+      tarjetas[indexOrigen].saldo -= monto;
+    } else if (tipo === 'abono') {
+      tarjetas[indexOrigen].saldo += monto;
+    }
+    
+    // Registrar transacción
     transacciones.push({
       fecha,
       tipo,
@@ -273,54 +984,644 @@ function registrarTransaccion() {
       monto,
       persona,
       categoria,
-      comentario
+      comentario,
+      detalles: {
+        tipoTarjeta: tarjeta.tipo,
+        banco: tarjeta.banco
+      }
     });
   }
+  
   guardarDatos();
   actualizarUI();
+  
+  // Limpiar campos
   document.getElementById('monto').value = '';
   document.getElementById('comentario').value = '';
-  document.getElementById('persona').value = '';
-  document.getElementById('categoria').value = '';
+}
+
+function editarTransaccion(index) {
+  const tx = transacciones[index];
+  document.getElementById('editarTransaccionId').value = index;
+  document.getElementById('editarTipoTransaccion').value = tx.tipo;
+  document.getElementById('editarMonto').value = tx.monto;
+  document.getElementById('editarFecha').value = tx.fecha.split('T')[0];
+  document.getElementById('editarPersona').value = tx.persona || '';
+  document.getElementById('editarCategoria').value = tx.categoria || '';
+  document.getElementById('editarComentario').value = tx.comentario || '';
+  
+  // Actualizar selects de tarjetas
+  const editarTarjetaOrigen = document.getElementById('editarTarjetaOrigen');
+  const editarTarjetaDestino = document.getElementById('editarTarjetaDestino');
+  editarTarjetaOrigen.innerHTML = '';
+  editarTarjetaDestino.innerHTML = '';
+  
+  tarjetas.forEach((t, i) => {
+    editarTarjetaOrigen.innerHTML += `<option value="${i}">${t.nombre}</option>`;
+    editarTarjetaDestino.innerHTML += `<option value="${i}">${t.nombre}</option>`;
+  });
+  
+  // Establecer valores de tarjetas según el tipo de transacción
+  if (tx.tipo === 'traslado') {
+    const origenIndex = tarjetas.findIndex(t => t.nombre === tx.detalles.origen);
+    const destinoIndex = tarjetas.findIndex(t => t.nombre === tx.detalles.destino);
+    
+    if (origenIndex !== -1) editarTarjetaOrigen.value = origenIndex;
+    if (destinoIndex !== -1) editarTarjetaDestino.value = destinoIndex;
+    
+    document.getElementById('editarDestino-container').style.display = 'block';
+  } else {
+    const tarjetaIndex = tarjetas.findIndex(t => t.nombre === tx.tarjetaNombre);
+    if (tarjetaIndex !== -1) editarTarjetaOrigen.value = tarjetaIndex;
+    document.getElementById('editarDestino-container').style.display = 'none';
+  }
+  
+  // Mostrar modal
+  mostrarModal('modalEditarTransaccion');
+}
+
+function guardarEdicionTransaccion() {
+  const index = parseInt(document.getElementById('editarTransaccionId').value);
+  const tipo = document.getElementById('editarTipoTransaccion').value;
+  const indexOrigen = parseInt(document.getElementById('editarTarjetaOrigen').value);
+  const indexDestino = tipo === 'traslado' ? parseInt(document.getElementById('editarTarjetaDestino').value) : null;
+  const monto = parseFloat(document.getElementById('editarMonto').value);
+  const persona = document.getElementById('editarPersona').value;
+  const categoria = document.getElementById('editarCategoria').value;
+  const comentario = document.getElementById('editarComentario').value.trim();
+  const fecha = document.getElementById('editarFecha').value || new Date().toISOString();
+  
+  // Validaciones
+  if (isNaN(monto) || monto <= 0) {
+    alert('Por favor ingresa un monto válido');
+    return;
+  }
+  
+  // Obtener transacción original para revertir cambios
+  const txOriginal = transacciones[index];
+  
+  // Revertir transacción original
+  if (txOriginal.tipo === 'traslado') {
+    const origenIndex = tarjetas.findIndex(t => t.nombre === txOriginal.detalles.origen);
+    const destinoIndex = tarjetas.findIndex(t => t.nombre === txOriginal.detalles.destino);
+    
+    if (origenIndex !== -1) tarjetas[origenIndex].saldo += txOriginal.monto;
+    if (destinoIndex !== -1) tarjetas[destinoIndex].saldo -= txOriginal.monto;
+  } else {
+    const tarjetaIndex = tarjetas.findIndex(t => t.nombre === txOriginal.tarjetaNombre);
+    if (tarjetaIndex !== -1) {
+      if (txOriginal.tipo === 'gasto') {
+        tarjetas[tarjetaIndex].saldo += txOriginal.monto;
+      } else if (txOriginal.tipo === 'abono') {
+        tarjetas[tarjetaIndex].saldo -= txOriginal.monto;
+      }
+    }
+  }
+  
+  // Aplicar nueva transacción
+  if (tipo === 'traslado') {
+    if (indexOrigen === indexDestino) {
+      alert('No puedes hacer un traslado entre la misma tarjeta');
+      return;
+    }
+    
+    const tarjetaOrigen = tarjetas[indexOrigen];
+    const tarjetaDestino = tarjetas[indexDestino];
+    
+    if (tarjetaOrigen.saldo < monto) {
+      alert(`La tarjeta ${tarjetaOrigen.nombre} no tiene suficiente saldo`);
+      return;
+    }
+    
+    // Actualizar saldos
+    tarjetas[indexOrigen].saldo -= monto;
+    tarjetas[indexDestino].saldo += monto;
+    
+    // Actualizar transacción
+    transacciones[index] = {
+      fecha,
+      tipo: 'traslado',
+      tarjetaNombre: `${tarjetaOrigen.nombre} → ${tarjetaDestino.nombre}`,
+      monto,
+      persona,
+      categoria,
+      comentario: comentario || 'Traslado entre tarjetas',
+      detalles: {
+        origen: tarjetaOrigen.nombre,
+        destino: tarjetaDestino.nombre
+      }
+    };
+  } else {
+    const tarjeta = tarjetas[indexOrigen];
+    
+    if (tipo === 'gasto' && tarjeta.saldo < monto) {
+      if (!confirm(`La tarjeta ${tarjeta.nombre} no tiene suficiente saldo. ¿Deseas registrar el gasto de todas formas?`)) {
+        return;
+      }
+    }
+    
+    // Actualizar saldo
+    if (tipo === 'gasto') {
+      tarjetas[indexOrigen].saldo -= monto;
+    } else if (tipo === 'abono') {
+      tarjetas[indexOrigen].saldo += monto;
+    }
+    
+    // Actualizar transacción
+    transacciones[index] = {
+      fecha,
+      tipo,
+      tarjetaNombre: tarjeta.nombre,
+      monto,
+      persona,
+      categoria,
+      comentario,
+      detalles: {
+        tipoTarjeta: tarjeta.tipo,
+        banco: tarjeta.banco
+      }
+    };
+  }
+  
+  guardarDatos();
+  actualizarUI();
+  cerrarModal('modalEditarTransaccion');
 }
 
 function eliminarTransaccion(index) {
+  if (!confirm('¿Estás seguro de eliminar esta transacción?')) {
+    return;
+  }
+  
+  const tx = transacciones[index];
+  
+  // Revertir la transacción
+  if (tx.tipo === 'traslado') {
+    const origenIndex = tarjetas.findIndex(t => t.nombre === tx.detalles.origen);
+    const destinoIndex = tarjetas.findIndex(t => t.nombre === tx.detalles.destino);
+    
+    if (origenIndex !== -1) tarjetas[origenIndex].saldo += tx.monto;
+    if (destinoIndex !== -1) tarjetas[destinoIndex].saldo -= tx.monto;
+  } else {
+    const tarjetaIndex = tarjetas.findIndex(t => t.nombre === tx.tarjetaNombre);
+    if (tarjetaIndex !== -1) {
+      if (tx.tipo === 'gasto') {
+        tarjetas[tarjetaIndex].saldo += tx.monto;
+      } else if (tx.tipo === 'abono') {
+        tarjetas[tarjetaIndex].saldo -= tx.monto;
+      }
+    }
+  }
+  
   transacciones.splice(index, 1);
   guardarDatos();
   actualizarUI();
 }
 
-function actualizarGraficaLinea() {
-  const ctx = document.getElementById('graficaLinea').getContext('2d');
-  const tarjetasMap = {};
-  tarjetas.forEach(t => tarjetasMap[t.nombre] = []);
-  transacciones.forEach(tx => {
-    if (tx.tipo !== 'traslado' && tarjetasMap[tx.tarjetaNombre]) {
-      const prev = tarjetasMap[tx.tarjetaNombre].length > 0
-        ? tarjetasMap[tx.tarjetaNombre][tarjetasMap[tx.tarjetaNombre].length - 1].saldo
-        : tarjetas.find(t => t.nombre === tx.tarjetaNombre)?.saldo || 0;
-      const nuevoSaldo = tx.tipo === 'gasto' ? prev - tx.monto : prev + tx.monto;
-      tarjetasMap[tx.tarjetaNombre].push({ fecha: tx.fecha, saldo: nuevoSaldo });
+// Funciones para personas
+function agregarPersona() {
+  const nombre = document.getElementById('nuevaPersona').value.trim();
+  if (!nombre) {
+    alert('Por favor ingresa un nombre válido');
+    return;
+  }
+  
+  if (personas.includes(nombre)) {
+    alert('Esta persona ya existe');
+    return;
+  }
+  
+  personas.push(nombre);
+  guardarDatos();
+  actualizarUI();
+  cerrarModal('modalAgregarPersona');
+  document.getElementById('nuevaPersona').value = '';
+}
+
+function eliminarPersona(nombre) {
+  if (!confirm(`¿Estás seguro de eliminar a "${nombre}"? Esto no eliminará las transacciones asociadas.`)) {
+    return;
+  }
+  
+  personas = personas.filter(p => p !== nombre);
+  guardarDatos();
+  actualizarUI();
+}
+
+// Funciones para categorías
+function agregarCategoria() {
+  const nombre = document.getElementById('nuevaCategoria').value.trim();
+  const tipo = document.getElementById('tipoCategoria').value;
+  
+  if (!nombre) {
+    alert('Por favor ingresa un nombre válido');
+    return;
+  }
+  
+  if (categorias.some(c => c.nombre.toLowerCase() === nombre.toLowerCase())) {
+    alert('Esta categoría ya existe');
+    return;
+  }
+  
+  categorias.push({ nombre, tipo });
+  guardarDatos();
+  actualizarUI();
+  cerrarModal('modalAgregarCategoria');
+  document.getElementById('nuevaCategoria').value = '';
+}
+
+function eliminarCategoria(nombre) {
+  if (!confirm(`¿Estás seguro de eliminar la categoría "${nombre}"? Las transacciones asociadas se mantendrán pero sin categoría.`)) {
+    return;
+  }
+  
+  // Contar transacciones con esta categoría
+  const count = transacciones.filter(tx => tx.categoria === nombre).length;
+  if (count > 0 && !confirm(`Hay ${count} transacciones con esta categoría. ¿Deseas continuar?`)) {
+    return;
+  }
+  
+  categorias = categorias.filter(c => c.nombre !== nombre);
+  guardarDatos();
+  actualizarUI();
+}
+
+// Funciones de UI
+function actualizarUI() {
+  actualizarListaTarjetas();
+  actualizarSelectsTarjetas();
+  actualizarSelectsPersonas();
+  actualizarSelectsCategorias();
+  actualizarTablaTransacciones();
+  actualizarResumenFinanciero();
+  actualizarGraficas();
+}
+
+function actualizarListaTarjetas() {
+  const listaTarjetas = document.getElementById('listaTarjetas');
+  const listaTarjetasEditar = document.getElementById('listaTarjetasEditar');
+  listaTarjetas.innerHTML = '';
+  listaTarjetasEditar.innerHTML = '';
+  
+  if (tarjetas.length === 0) {
+    listaTarjetas.innerHTML = '<li>No hay tarjetas registradas</li>';
+    listaTarjetasEditar.innerHTML = '<li>No hay tarjetas registradas</li>';
+    return;
+  }
+  
+  tarjetas.forEach((t, i) => {
+    const icono = obtenerIconoTarjeta(t.tipo);
+    const claseSaldo = t.saldo >= 0 ? 'positive' : 'negative';
+    
+    listaTarjetas.innerHTML += `
+      <li>
+        <strong>${icono} ${t.nombre}:</strong> 
+        <span class="${claseSaldo}">$${t.saldo.toFixed(2)}</span>
+        <span class="badge ${obtenerClaseBadgeTipoTarjeta(t.tipo)}">${t.tipo}</span>
+        ${t.banco && t.banco !== 'No especificado' ? `<span class="badge info">${t.banco}</span>` : ''}
+      </li>
+    `;
+    
+    listaTarjetasEditar.innerHTML += `
+      <li style="margin-bottom: 10px;">
+        <strong>${icono} ${t.nombre}:</strong> 
+        <span class="${claseSaldo}">$${t.saldo.toFixed(2)}</span>
+        <div style="display: flex; gap: 5px; margin-top: 5px;">
+          <button onclick="editarTarjeta(${i})" class="secondary" style="padding: 5px 10px; font-size: 12px;">
+            <i class="fas fa-edit"></i> Editar
+          </button>
+          <button onclick="eliminarTarjeta(${i})" class="danger" style="padding: 5px 10px; font-size: 12px;">
+            <i class="fas fa-trash"></i> Eliminar
+          </button>
+        </div>
+      </li>
+    `;
+  });
+}
+
+function obtenerIconoTarjeta(tipo) {
+  switch(tipo) {
+    case 'credito': return '<i class="fas fa-credit-card"></i>';
+    case 'debito': return '<i class="fas fa-money-bill-alt"></i>';
+    case 'efectivo': return '<i class="fas fa-wallet"></i>';
+    case 'ahorro': return '<i class="fas fa-piggy-bank"></i>';
+    case 'inversion': return '<i class="fas fa-chart-line"></i>';
+    default: return '<i class="fas fa-credit-card"></i>';
+  }
+}
+
+function obtenerClaseBadgeTipoTarjeta(tipo) {
+  switch(tipo) {
+    case 'credito': return 'danger';
+    case 'debito': return 'primary';
+    case 'efectivo': return 'success';
+    case 'ahorro': return 'info';
+    case 'inversion': return 'warning';
+    default: return '';
+  }
+}
+
+function actualizarSelectsTarjetas() {
+  const tarjetaOrigen = document.getElementById('tarjetaOrigen');
+  const tarjetaDestino = document.getElementById('tarjetaDestino');
+  const filtroTarjeta = document.getElementById('filtroTarjeta');
+  const filtroGraficaTarjeta = document.getElementById('filtroGraficaTarjeta');
+  
+  tarjetaOrigen.innerHTML = '';
+  tarjetaDestino.innerHTML = '';
+  filtroTarjeta.innerHTML = '<option value="">Todas las tarjetas</option>';
+  filtroGraficaTarjeta.innerHTML = '<option value="">Todas las tarjetas</option>';
+  
+  tarjetas.forEach((t, i) => {
+    tarjetaOrigen.innerHTML += `<option value="${i}">${t.nombre}</option>`;
+    tarjetaDestino.innerHTML += `<option value="${i}">${t.nombre}</option>`;
+    filtroTarjeta.innerHTML += `<option value="${t.nombre}">${t.nombre}</option>`;
+    filtroGraficaTarjeta.innerHTML += `<option value="${t.nombre}">${t.nombre}</option>`;
+  });
+}
+
+function actualizarSelectsPersonas() {
+  const selectPersona = document.getElementById('persona');
+  const editarPersona = document.getElementById('editarPersona');
+  const filtroPersona = document.getElementById('filtroPersona');
+  const filtroGastosPersona = document.getElementById('filtroGastosPersona');
+  
+  selectPersona.innerHTML = '<option value="">Seleccionar persona</option>';
+  editarPersona.innerHTML = '<option value="">Seleccionar persona</option>';
+  filtroPersona.innerHTML = '<option value="">Todas las personas</option>';
+  filtroGastosPersona.innerHTML = '<option value="">Todas las personas</option>';
+  
+  personas.forEach(p => {
+    selectPersona.innerHTML += `<option value="${p}">${p}</option>`;
+    editarPersona.innerHTML += `<option value="${p}">${p}</option>`;
+    filtroPersona.innerHTML += `<option value="${p}">${p}</option>`;
+    filtroGastosPersona.innerHTML += `<option value="${p}">${p}</option>`;
+  });
+}
+
+function actualizarSelectsCategorias() {
+  const selectCategoria = document.getElementById('categoria');
+  const editarCategoria = document.getElementById('editarCategoria');
+  const filtroCategoria = document.getElementById('filtroCategoria');
+  
+  selectCategoria.innerHTML = '<option value="">Seleccionar categoría</option>';
+  editarCategoria.innerHTML = '<option value="">Seleccionar categoría</option>';
+  filtroCategoria.innerHTML = '<option value="">Todas las categorías</option>';
+  
+  categorias.forEach(c => {
+    selectCategoria.innerHTML += `<option value="${c.nombre}">${c.nombre} (${c.tipo})</option>`;
+    editarCategoria.innerHTML += `<option value="${c.nombre}">${c.nombre} (${c.tipo})</option>`;
+    filtroCategoria.innerHTML += `<option value="${c.nombre}">${c.nombre} (${c.tipo})</option>`;
+  });
+}
+
+function actualizarTablaTransacciones() {
+  filtrarTransacciones();
+}
+
+function filtrarTransacciones() {
+  const filtroPersona = document.getElementById('filtroPersona').value;
+  const filtroCategoria = document.getElementById('filtroCategoria').value;
+  const filtroTarjeta = document.getElementById('filtroTarjeta').value;
+  const filtroTipo = document.getElementById('filtroTipo').value;
+  const filtroFechaInicio = document.getElementById('filtroFechaInicio').value;
+  const filtroFechaFin = document.getElementById('filtroFechaFin').value;
+  const filtroMontoMin = parseFloat(document.getElementById('filtroMontoMin').value) || 0;
+  const filtroMontoMax = parseFloat(document.getElementById('filtroMontoMax').value) || Infinity;
+  
+  // Filtrar transacciones
+  paginacion.transaccionesFiltradas = transacciones.filter(tx => {
+    // Aplicar filtros
+    if (filtroPersona && tx.persona !== filtroPersona) return false;
+    if (filtroCategoria && tx.categoria !== filtroCategoria) return false;
+    if (filtroTarjeta && tx.tarjetaNombre !== filtroTarjeta) {
+      // Para traslados, verificar si alguna de las tarjetas coincide
+      if (tx.tipo !== 'traslado' || 
+          !(tx.detalles.origen === filtroTarjeta || tx.detalles.destino === filtroTarjeta)) {
+        return false;
+      }
+    }
+    if (filtroTipo && tx.tipo !== filtroTipo) return false;
+    
+    // Filtrar por fecha
+    const fechaTx = new Date(tx.fecha).toISOString().split('T')[0];
+    if (filtroFechaInicio && fechaTx < filtroFechaInicio) return false;
+    if (filtroFechaFin && fechaTx > filtroFechaFin) return false;
+    
+    // Filtrar por monto
+    if (tx.monto < filtroMontoMin || tx.monto > filtroMontoMax) return false;
+    
+    return true;
+  });
+  
+  // Ordenar transacciones
+  paginacion.transaccionesFiltradas.sort((a, b) => {
+    const valorA = a[orden.campo] || '';
+    const valorB = b[orden.campo] || '';
+    
+    if (orden.campo === 'fecha') {
+      return orden.direccion === 'asc' 
+        ? new Date(a.fecha) - new Date(b.fecha)
+        : new Date(b.fecha) - new Date(a.fecha);
+    } else if (orden.campo === 'monto') {
+      return orden.direccion === 'asc' 
+        ? a.monto - b.monto
+        : b.monto - a.monto;
+    } else {
+      if (valorA < valorB) return orden.direccion === 'asc' ? -1 : 1;
+      if (valorA > valorB) return orden.direccion === 'asc' ? 1 : -1;
+      return 0;
     }
   });
-  const datasets = Object.entries(tarjetasMap).map(([tarjeta, datos]) => ({
-    label: tarjeta,
-    data: datos.map(d => ({ x: new Date(d.fecha), y: d.saldo })),
-    fill: false,
-    tension: 0.3,
-    borderWidth: 2
-  }));
+  
+  // Actualizar paginación
+  paginacion.paginaActual = 1;
+  actualizarTablaPaginada();
+}
+
+function ordenarPor(campo) {
+  if (orden.campo === campo) {
+    orden.direccion = orden.direccion === 'asc' ? 'desc' : 'asc';
+  } else {
+    orden.campo = campo;
+    orden.direccion = 'asc';
+  }
+  
+  filtrarTransacciones();
+}
+
+function actualizarTablaPaginada() {
+  const tablaTransacciones = document.getElementById('tablaTransacciones');
+  const paginaInfo = document.getElementById('paginaInfo');
+  const btnAnterior = document.getElementById('btnAnterior');
+  const btnSiguiente = document.getElementById('btnSiguiente');
+  
+  const totalPaginas = Math.ceil(paginacion.transaccionesFiltradas.length / paginacion.itemsPorPagina);
+  const inicio = (paginacion.paginaActual - 1) * paginacion.itemsPorPagina;
+  const fin = inicio + paginacion.itemsPorPagina;
+  const transaccionesPagina = paginacion.transaccionesFiltradas.slice(inicio, fin);
+  
+  tablaTransacciones.innerHTML = '';
+  
+  if (paginacion.transaccionesFiltradas.length === 0) {
+    tablaTransacciones.innerHTML = '<tr><td colspan="8" style="text-align: center;">No hay transacciones que coincidan con los filtros</td></tr>';
+  } else {
+    transaccionesPagina.forEach((tx, i) => {
+      const indexReal = transacciones.findIndex(t => t.fecha === tx.fecha && t.monto === tx.monto && t.tarjetaNombre === tx.tarjetaNombre);
+      const claseFila = tx.tipo === 'gasto' ? 'negative' : tx.tipo === 'abono' ? 'positive' : 'traslado';
+      
+      tablaTransacciones.innerHTML += `
+        <tr class="${claseFila}">
+          <td>${new Date(tx.fecha).toLocaleDateString()}</td>
+          <td>${tx.tarjetaNombre}</td>
+          <td>${tx.tipo}</td>
+          <td>$${tx.monto.toFixed(2)}</td>
+          <td>${tx.persona || '-'}</td>
+          <td>${tx.categoria || '-'}</td>
+          <td>${tx.comentario || '-'}</td>
+          <td style="white-space: nowrap;">
+            <button onclick="editarTransaccion(${indexReal})" class="secondary" style="padding: 5px 10px;">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button onclick="eliminarTransaccion(${indexReal})" class="danger" style="padding: 5px 10px;">
+              <i class="fas fa-trash"></i>
+            </button>
+          </td>
+        </tr>
+      `;
+    });
+  }
+  
+  // Actualizar controles de paginación
+  paginaInfo.textContent = `Página ${paginacion.paginaActual} de ${totalPaginas}`;
+  btnAnterior.disabled = paginacion.paginaActual <= 1;
+  btnSiguiente.disabled = paginacion.paginaActual >= totalPaginas;
+}
+
+function cambiarPagina(delta) {
+  const totalPaginas = Math.ceil(paginacion.transaccionesFiltradas.length / paginacion.itemsPorPagina);
+  const nuevaPagina = paginacion.paginaActual + delta;
+  
+  if (nuevaPagina > 0 && nuevaPagina <= totalPaginas) {
+    paginacion.paginaActual = nuevaPagina;
+    actualizarTablaPaginada();
+  }
+}
+
+function limpiarFiltros() {
+  document.getElementById('filtroPersona').value = '';
+  document.getElementById('filtroCategoria').value = '';
+  document.getElementById('filtroTarjeta').value = '';
+  document.getElementById('filtroTipo').value = '';
+  document.getElementById('filtroFechaInicio').value = '';
+  document.getElementById('filtroFechaFin').value = '';
+  document.getElementById('filtroMontoMin').value = '';
+  document.getElementById('filtroMontoMax').value = '';
+  filtrarTransacciones();
+}
+
+function actualizarResumenFinanciero() {
+  let gastosTotales = 0;
+  let ingresosTotales = 0;
+  let saldoTotal = 0;
+  
+  transacciones.forEach(tx => {
+    if (tx.tipo === 'gasto') {
+      gastosTotales += tx.monto;
+    } else if (tx.tipo === 'abono') {
+      ingresosTotales += tx.monto;
+    }
+  });
+  
+  tarjetas.forEach(t => {
+    saldoTotal += t.saldo;
+  });
+  
+  const balanceGeneral = ingresosTotales - gastosTotales;
+  
+  document.getElementById('gastosTotales').textContent = `$${gastosTotales.toFixed(2)}`;
+  document.getElementById('ingresosTotales').textContent = `$${ingresosTotales.toFixed(2)}`;
+  document.getElementById('balanceGeneral').textContent = `$${balanceGeneral.toFixed(2)}`;
+  document.getElementById('saldoTotal').textContent = `$${saldoTotal.toFixed(2)}`;
+}
+
+function actualizarGraficas() {
+  actualizarGraficaLinea();
+  actualizarGraficaDonut();
+  actualizarGraficaBarras();
+}
+
+function actualizarGraficaLinea() {
+  const ctx = document.getElementById('graficaLinea').getContext('2d');
+  const filtroTarjeta = document.getElementById('filtroGraficaTarjeta').value;
+  const dias = parseInt(document.getElementById('filtroGraficaPeriodo').value);
+  
+  // Filtrar por período de tiempo
+  const fechaLimite = dias > 0 
+    ? new Date(Date.now() - dias * 24 * 60 * 60 * 1000)
+    : null;
+  
+  const tarjetasAMostrar = filtroTarjeta 
+    ? tarjetas.filter(t => t.nombre === filtroTarjeta)
+    : tarjetas;
+  
+  // Preparar datos para cada tarjeta
+  const datasets = tarjetasAMostrar.map(t => {
+    // Obtener saldos históricos para esta tarjeta
+    const saldos = [{ fecha: new Date(t.fechaCreacion).toISOString(), saldo: t.saldo }];
+    
+    transacciones.forEach(tx => {
+      if (tx.tipo === 'traslado') {
+        if (tx.detalles.origen === t.nombre) {
+          saldos.push({ fecha: tx.fecha, saldo: saldos[saldos.length - 1].saldo - tx.monto });
+        } else if (tx.detalles.destino === t.nombre) {
+          saldos.push({ fecha: tx.fecha, saldo: saldos[saldos.length - 1].saldo + tx.monto });
+        }
+      } else if (tx.tarjetaNombre === t.nombre) {
+        const cambio = tx.tipo === 'gasto' ? -tx.monto : tx.monto;
+        saldos.push({ fecha: tx.fecha, saldo: saldos[saldos.length - 1].saldo + cambio });
+      }
+    });
+    
+    // Filtrar por período de tiempo si es necesario
+    const saldosFiltrados = fechaLimite
+      ? saldos.filter(s => new Date(s.fecha) >= fechaLimite)
+      : saldos;
+    
+    return {
+      label: t.nombre,
+      data: saldosFiltrados.map(s => ({ x: new Date(s.fecha), y: s.saldo })),
+      fill: false,
+      tension: 0.3,
+      borderWidth: 2
+    };
+  });
+  
+  // Destruir gráfica anterior si existe
   if (window.lineaGastos) {
     window.lineaGastos.destroy();
   }
+  
+  // Crear nueva gráfica
   window.lineaGastos = new Chart(ctx, {
     type: 'line',
     data: { datasets },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
       scales: {
-        x: { type: 'time', time: { unit: 'day' }, title: { display: true, text: 'Fecha' } },
-        y: { beginAtZero: false, title: { display: true, text: 'Saldo ($)' } }
+        x: { 
+          type: 'time', 
+          time: { 
+            unit: dias <= 30 ? 'day' : dias <= 365 ? 'month' : 'year',
+            tooltipFormat: 'dd MMM yyyy'
+          }, 
+          title: { display: true, text: 'Fecha' } 
+        },
+        y: { 
+          beginAtZero: false, 
+          title: { display: true, text: 'Saldo ($)' } 
+        }
       },
       plugins: {
         tooltip: {
@@ -333,32 +1634,717 @@ function actualizarGraficaLinea() {
   });
 }
 
-document.getElementById('tipoTransaccion').addEventListener('change', (e) => {
-  const tarjetaDestino = document.getElementById('tarjetaDestino');
-  tarjetaDestino.style.display = e.target.value === 'traslado' ? 'block' : 'none';
-});
+function actualizarGraficaDonut() {
+  const ctx = document.getElementById('graficaDonut').getContext('2d');
+  
+  // Agrupar gastos por categoría
+  const gastosPorCategoria = {};
+  const ingresosPorCategoria = {};
+  
+  transacciones.forEach(tx => {
+    if (tx.tipo === 'gasto' && tx.categoria) {
+      gastosPorCategoria[tx.categoria] = (gastosPorCategoria[tx.categoria] || 0) + tx.monto;
+    } else if (tx.tipo === 'abono' && tx.categoria) {
+      ingresosPorCategoria[tx.categoria] = (ingresosPorCategoria[tx.categoria] || 0) + tx.monto;
+    }
+  });
+  
+  // Preparar datos para la gráfica
+  const labels = Object.keys(gastosPorCategoria).concat(Object.keys(ingresosPorCategoria));
+  const data = Object.values(gastosPorCategoria).concat(Object.values(ingresosPorCategoria));
+  const backgroundColors = [
+    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40',
+    '#8AC24A', '#607D8B', '#E91E63', '#3F51B5', '#00BCD4', '#CDDC39'
+  ];
+  
+  // Destruir gráfica anterior si existe
+  if (window.donutGastos) {
+    window.donutGastos.destroy();
+  }
+  
+  // Crear nueva gráfica
+  window.donutGastos = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: labels,
+      datasets: [{
+        data: data,
+        backgroundColor: backgroundColors.slice(0, labels.length),
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'right',
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const label = context.label || '';
+              const value = context.raw || 0;
+              const total = context.dataset.data.reduce((a, b) => a + b, 0);
+              const percentage = Math.round((value / total) * 100);
+              return `${label}: $${value.toFixed(2)} (${percentage}%)`;
+            }
+          }
+        }
+      }
+    },
+    plugins: [ChartDataLabels]
+  });
+}
 
+function actualizarGraficaBarras() {
+  const ctx = document.getElementById('graficaBarras').getContext('2d');
+  const filtroPersona = document.getElementById('filtroGastosPersona').value;
+  const dias = parseInt(document.getElementById('filtroGastosPeriodo').value);
+  
+  // Filtrar por período de tiempo
+  const fechaLimite = dias > 0 
+    ? new Date(Date.now() - dias * 24 * 60 * 60 * 1000)
+    : null;
+  
+  // Agrupar gastos por categoría y persona
+  const datos = {};
+  
+  transacciones.forEach(tx => {
+    if (tx.tipo === 'gasto' && (!filtroPersona || tx.persona === filtroPersona)) {
+      if (fechaLimite && new Date(tx.fecha) < fechaLimite) return;
+      
+      const key = tx.categoria || 'Sin categoría';
+      datos[key] = datos[key] || { total: 0, personas: {} };
+      datos[key].total += tx.monto;
+      
+      if (tx.persona) {
+        datos[key].personas[tx.persona] = (datos[key].personas[tx.persona] || 0) + tx.monto;
+      }
+    }
+  });
+  
+  // Ordenar categorías por monto total
+  const categoriasOrdenadas = Object.keys(datos).sort((a, b) => datos[b].total - datos[a].total);
+  
+  // Preparar datos para la gráfica
+  const labels = categoriasOrdenadas;
+  const data = categoriasOrdenadas.map(cat => datos[cat].total);
+  
+  // Destruir gráfica anterior si existe
+  if (window.barrasGastos) {
+    window.barrasGastos.destroy();
+  }
+  
+  // Crear nueva gráfica
+  window.barrasGastos = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Gastos por categoría',
+        data: data,
+        backgroundColor: '#0d6efd',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Monto ($)'
+          }
+        },
+        x: {
+          title: {
+            display: true,
+            text: 'Categoría'
+          }
+        }
+      },
+      plugins: {
+        tooltip: {
+          callbacks: {
+            afterLabel: function(context) {
+              const categoria = context.label;
+              const personas = datos[categoria].personas;
+              const total = datos[categoria].total;
+              
+              let tooltip = '\n\nDesglose por persona:\n';
+              for (const persona in personas) {
+                const porcentaje = Math.round((personas[persona] / total) * 100);
+                tooltip += `${persona}: $${personas[persona].toFixed(2)} (${porcentaje}%)\n`;
+              }
+              
+              return tooltip;
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+// Funciones de exportación/importación
 function exportarAExcel() {
-  const tabla = document.getElementById('tablaTransacciones');
-  const wb = XLSX.utils.table_to_book(tabla);
-  XLSX.writeFile(wb, 'Historial_Transacciones.xlsx');
+  // Preparar datos para exportar
+  const datos = paginacion.transaccionesFiltradas.map(tx => ({
+    Fecha: new Date(tx.fecha).toLocaleDateString(),
+    Tarjeta: tx.tarjetaNombre,
+    Tipo: tx.tipo,
+    Monto: tx.monto,
+    Persona: tx.persona || '-',
+    Categoría: tx.categoria || '-',
+    Comentario: tx.comentario || '-'
+  }));
+  
+  // Crear hoja de cálculo
+  const ws = XLSX.utils.json_to_sheet(datos);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Transacciones");
+  
+  // Exportar
+  const fecha = new Date().toISOString().split('T')[0];
+  XLSX.writeFile(wb, `Transacciones_${fecha}.xlsx`);
 }
 
 async function exportarAPDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
-
+  
+  // Título
+  doc.setFontSize(18);
+  doc.text('Historial de Transacciones', 105, 15, { align: 'center' });
+  
+  // Fecha de generación
+  doc.setFontSize(10);
+  doc.text(`Generado el: ${new Date().toLocaleDateString()}`, 105, 22, { align: 'center' });
+  
+  // Filtros aplicados
+  const filtros = [];
+  if (document.getElementById('filtroPersona').value) filtros.push(`Persona: ${document.getElementById('filtroPersona').value}`);
+  if (document.getElementById('filtroCategoria').value) filtros.push(`Categoría: ${document.getElementById('filtroCategoria').value}`);
+  if (document.getElementById('filtroTarjeta').value) filtros.push(`Tarjeta: ${document.getElementById('filtroTarjeta').value}`);
+  if (document.getElementById('filtroTipo').value) filtros.push(`Tipo: ${document.getElementById('filtroTipo').value}`);
+  if (document.getElementById('filtroFechaInicio').value) filtros.push(`Desde: ${document.getElementById('filtroFechaInicio').value}`);
+  if (document.getElementById('filtroFechaFin').value) filtros.push(`Hasta: ${document.getElementById('filtroFechaFin').value}`);
+  
+  if (filtros.length > 0) {
+    doc.setFontSize(10);
+    doc.text(`Filtros: ${filtros.join(', ')}`, 105, 28, { align: 'center' });
+  }
+  
+  // Tabla de transacciones
   doc.autoTable({
-    html: '#tablaTransacciones',
+    startY: 35,
     head: [['Fecha', 'Tarjeta', 'Tipo', 'Monto', 'Persona', 'Categoría', 'Comentario']],
-    body: Array.from(document.querySelectorAll('#tablaTransacciones tr')).map(tr => {
-      return Array.from(tr.querySelectorAll('td')).map(td => td.innerText);
-    }),
+    body: paginacion.transaccionesFiltradas.map(tx => [
+      new Date(tx.fecha).toLocaleDateString(),
+      tx.tarjetaNombre,
+      tx.tipo,
+      `$${tx.monto.toFixed(2)}`,
+      tx.persona || '-',
+      tx.categoria || '-',
+      tx.comentario || '-'
+    ]),
+    styles: {
+      cellPadding: 3,
+      fontSize: 8,
+      valign: 'middle'
+    },
+    headStyles: {
+      fillColor: [13, 110, 253],
+      textColor: 255,
+      fontStyle: 'bold'
+    },
+    columnStyles: {
+      0: { cellWidth: 20 },
+      1: { cellWidth: 30 },
+      2: { cellWidth: 15 },
+      3: { cellWidth: 20 },
+      4: { cellWidth: 25 },
+      5: { cellWidth: 25 },
+      6: { cellWidth: 'auto' }
+    },
+    didDrawPage: function(data) {
+      // Pie de página
+      doc.setFontSize(10);
+      doc.setTextColor(100);
+      doc.text(`Página ${data.pageCount}`, data.settings.margin.left, doc.internal.pageSize.height - 10);
+    }
   });
-
-  doc.save('Historial_Transacciones.pdf');
+  
+  // Guardar PDF
+  const fecha = new Date().toISOString().split('T')[0];
+  doc.save(`Transacciones_${fecha}.pdf`);
 }
 
+function exportarBackup() {
+  const datos = {
+    tarjetas: tarjetas,
+    transacciones: transacciones,
+    personas: personas,
+    categorias: categorias,
+    fechaBackup: new Date().toISOString(),
+    version: '1.0'
+  };
+  
+  const blob = new Blob([JSON.stringify(datos, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `backup_finanzas_${new Date().toISOString().split('T')[0]}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function mostrarModalImportar() {
+  document.getElementById('archivoImportar').value = '';
+  document.getElementById('resultadoImportacion').textContent = '';
+  mostrarModal('modalImportar');
+}
+
+function importarDatos() {
+  const fileInput = document.getElementById('archivoImportar');
+  const tipoImportacion = document.getElementById('tipoImportacion').value;
+  const sobrescribir = document.getElementById('sobrescribirDatos').checked;
+  const resultado = document.getElementById('resultadoImportacion');
+  
+  if (!fileInput.files.length) {
+    resultado.textContent = 'Por favor selecciona un archivo';
+    resultado.style.color = 'red';
+    return;
+  }
+  
+  const file = fileInput.files[0];
+  const reader = new FileReader();
+  
+  reader.onload = function(e) {
+    try {
+      let datos;
+      
+      if (file.name.endsWith('.json')) {
+        datos = JSON.parse(e.target.result);
+      } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+        const workbook = XLSX.read(e.target.result, { type: 'array' });
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        datos = XLSX.utils.sheet_to_json(firstSheet);
+        
+        // Convertir datos de Excel a nuestro formato
+        if (tipoImportacion === 'transacciones') {
+          datos = datos.map(row => ({
+            fecha: new Date(row.Fecha || row.fecha).toISOString(),
+            tipo: row.Tipo || row.tipo,
+            tarjetaNombre: row.Tarjeta || row.tarjetaNombre,
+            monto: parseFloat(row.Monto || row.monto),
+            persona: row.Persona || row.persona || '',
+            categoria: row.Categoría || row.categoria || '',
+            comentario: row.Comentario || row.comentario || ''
+          }));
+        } else if (tipoImportacion === 'tarjetas') {
+          datos = datos.map(row => ({
+            nombre: row.Nombre || row.nombre,
+            saldo: parseFloat(row.Saldo || row.saldo),
+            tipo: row.Tipo || row.tipo || 'debito',
+            banco: row.Banco || row.banco || ''
+          }));
+        }
+      } else {
+        throw new Error('Formato de archivo no soportado');
+      }
+      
+      // Procesar los datos importados
+      if (tipoImportacion === 'transacciones') {
+        if (sobrescribir) {
+          transacciones = datos;
+        } else {
+          transacciones = [...transacciones, ...datos];
+        }
+        resultado.textContent = `Se importaron ${datos.length} transacciones`;
+      } else if (tipoImportacion === 'tarjetas') {
+        if (sobrescribir) {
+          tarjetas = datos;
+        } else {
+          // Evitar duplicados
+          const nombresExistentes = new Set(tarjetas.map(t => t.nombre));
+          const nuevasTarjetas = datos.filter(t => !nombresExistentes.has(t.nombre));
+          tarjetas = [...tarjetas, ...nuevasTarjetas];
+        }
+        resultado.textContent = `Se importaron ${datos.length} tarjetas`;
+      } else if (tipoImportacion === 'backup') {
+        if (sobrescribir) {
+          tarjetas = datos.tarjetas || [];
+          transacciones = datos.transacciones || [];
+          personas = datos.personas || [];
+          categorias = datos.categorias || [];
+        } else {
+          // Combinar datos evitando duplicados
+          tarjetas = combinarArraysUnicos(tarjetas, datos.tarjetas || [], 'nombre');
+          transacciones = [...transacciones, ...(datos.transacciones || [])];
+          personas = [...new Set([...personas, ...(datos.personas || [])])];
+          categorias = combinarArraysUnicos(categorias, datos.categorias || [], 'nombre');
+        }
+        resultado.textContent = 'Backup importado correctamente';
+      }
+      
+      resultado.style.color = 'green';
+      guardarDatos();
+      actualizarUI();
+    } catch (error) {
+      resultado.textContent = `Error al importar: ${error.message}`;
+      resultado.style.color = 'red';
+    }
+  };
+  
+  reader.onerror = function() {
+    resultado.textContent = 'Error al leer el archivo';
+    resultado.style.color = 'red';
+  };
+  
+  if (file.name.endsWith('.json')) {
+    reader.readAsText(file);
+  } else {
+    reader.readAsArrayBuffer(file);
+  }
+}
+
+function combinarArraysUnicos(arr1, arr2, clave) {
+  const conjunto = new Map();
+  
+  [...arr1, ...arr2].forEach(item => {
+    const key = item[clave];
+    if (!conjunto.has(key)) {
+      conjunto.set(key, item);
+    }
+  });
+  
+  return Array.from(conjunto.values());
+}
+
+// Funciones de UI auxiliares
+function mostrarModal(id) {
+  document.getElementById(id).style.display = 'block';
+}
+
+function cerrarModal(id) {
+  document.getElementById(id).style.display = 'none';
+}
+
+function showTab(tabId) {
+  // Ocultar todos los contenidos de pestañas
+  document.querySelectorAll('.tab-content').forEach(content => {
+    content.style.display = 'none';
+  });
+  
+  // Mostrar el contenido de la pestaña seleccionada
+  document.getElementById(tabId).style.display = 'block';
+  
+  // Actualizar estado activo de las pestañas
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.classList.remove('active');
+  });
+  
+  // Marcar la pestaña correspondiente como activa
+  if (tabId === 'add-card') {
+    document.querySelectorAll('.tab')[0].classList.add('active');
+  } else if (tabId === 'edit-cards') {
+    document.querySelectorAll('.tab')[1].classList.add('active');
+  }
+}
+
+function mostrarModalAgregarPersona() {
+  document.getElementById('nuevaPersona').value = '';
+  mostrarModal('modalAgregarPersona');
+}
+
+function mostrarModalAgregarCategoria() {
+  document.getElementById('nuevaCategoria').value = '';
+  mostrarModal('modalAgregarCategoria');
+}
+
+function mostrarModalResumen() {
+  mostrarModal('modalResumen');
+  mostrarResumenTab('resumen-categorias');
+  actualizarResumenTransacciones();
+}
+
+function mostrarResumenTab(tabId) {
+  // Ocultar todos los contenidos de pestañas
+  document.querySelectorAll('.resumen-tab-content').forEach(content => {
+    content.style.display = 'none';
+  });
+  
+  // Mostrar el contenido de la pestaña seleccionada
+  document.getElementById(tabId).style.display = 'block';
+  
+  // Actualizar estado activo de las pestañas
+  document.querySelectorAll('#modalResumen .tab').forEach(tab => {
+    tab.classList.remove('active');
+  });
+  
+  // Marcar la pestaña correspondiente como activa
+  const tabs = document.querySelectorAll('#modalResumen .tab');
+  for (let i = 0; i < tabs.length; i++) {
+    if (tabs[i].getAttribute('onclick').includes(tabId)) {
+      tabs[i].classList.add('active');
+      break;
+    }
+  }
+}
+
+function actualizarResumenTransacciones() {
+  // Resumen por categoría
+  const gastosPorCategoria = {};
+  const ingresosPorCategoria = {};
+  
+  transacciones.forEach(tx => {
+    if (tx.tipo === 'gasto' && tx.categoria) {
+      gastosPorCategoria[tx.categoria] = (gastosPorCategoria[tx.categoria] || 0) + tx.monto;
+    } else if (tx.tipo === 'abono' && tx.categoria) {
+      ingresosPorCategoria[tx.categoria] = (ingresosPorCategoria[tx.categoria] || 0) + tx.monto;
+    }
+  });
+  
+  // Ordenar categorías por monto
+  const categoriasGastosOrdenadas = Object.keys(gastosPorCategoria).sort((a, b) => gastosPorCategoria[b] - gastosPorCategoria[a]);
+  const categoriasIngresosOrdenadas = Object.keys(ingresosPorCategoria).sort((a, b) => ingresosPorCategoria[b] - ingresosPorCategoria[a]);
+  
+  let htmlGastos = '';
+  categoriasGastosOrdenadas.forEach(cat => {
+    const porcentaje = (gastosPorCategoria[cat] / Object.values(gastosPorCategoria).reduce((a, b) => a + b, 0)) * 100;
+    htmlGastos += `
+      <div class="category-item">
+        <div class="category-name">${cat}</div>
+        <div class="category-amount">$${gastosPorCategoria[cat].toFixed(2)} (${Math.round(porcentaje)}%)</div>
+      </div>
+      <div class="progress-container">
+        <div class="progress-bar" style="width: ${porcentaje}%"></div>
+      </div>
+    `;
+  });
+  
+  let htmlIngresos = '';
+  categoriasIngresosOrdenadas.forEach(cat => {
+    const porcentaje = (ingresosPorCategoria[cat] / Object.values(ingresosPorCategoria).reduce((a, b) => a + b, 0)) * 100;
+    htmlIngresos += `
+      <div class="category-item">
+        <div class="category-name">${cat}</div>
+        <div class="category-amount">$${ingresosPorCategoria[cat].toFixed(2)} (${Math.round(porcentaje)}%)</div>
+      </div>
+      <div class="progress-container">
+        <div class="progress-bar" style="width: ${porcentaje}%"></div>
+      </div>
+    `;
+  });
+  
+  document.getElementById('listaCategoriasGastos').innerHTML = htmlGastos || '<p>No hay gastos por categoría</p>';
+  document.getElementById('listaCategoriasIngresos').innerHTML = htmlIngresos || '<p>No hay ingresos por categoría</p>';
+  
+  // Resumen por persona
+  const gastosPorPersona = {};
+  const ingresosPorPersona = {};
+  
+  transacciones.forEach(tx => {
+    if (tx.tipo === 'gasto' && tx.persona) {
+      gastosPorPersona[tx.persona] = (gastosPorPersona[tx.persona] || 0) + tx.monto;
+    } else if (tx.tipo === 'abono' && tx.persona) {
+      ingresosPorPersona[tx.persona] = (ingresosPorPersona[tx.persona] || 0) + tx.monto;
+    }
+  });
+  
+  // Ordenar personas por monto
+  const personasGastosOrdenadas = Object.keys(gastosPorPersona).sort((a, b) => gastosPorPersona[b] - gastosPorPersona[a]);
+  const personasIngresosOrdenadas = Object.keys(ingresosPorPersona).sort((a, b) => ingresosPorPersona[b] - ingresosPorPersona[a]);
+  
+  let htmlGastosPersonas = '';
+  personasGastosOrdenadas.forEach(persona => {
+    const porcentaje = (gastosPorPersona[persona] / Object.values(gastosPorPersona).reduce((a, b) => a + b, 0)) * 100;
+    htmlGastosPersonas += `
+      <div class="category-item">
+        <div class="category-name">${persona}</div>
+        <div class="category-amount">$${gastosPorPersona[persona].toFixed(2)} (${Math.round(porcentaje)}%)</div>
+      </div>
+      <div class="progress-container">
+        <div class="progress-bar" style="width: ${porcentaje}%"></div>
+      </div>
+    `;
+  });
+  
+  let htmlIngresosPersonas = '';
+  personasIngresosOrdenadas.forEach(persona => {
+    const porcentaje = (ingresosPorPersona[persona] / Object.values(ingresosPorPersona).reduce((a, b) => a + b, 0)) * 100;
+    htmlIngresosPersonas += `
+      <div class="category-item">
+        <div class="category-name">${persona}</div>
+        <div class="category-amount">$${ingresosPorPersona[persona].toFixed(2)} (${Math.round(porcentaje)}%)</div>
+      </div>
+      <div class="progress-container">
+        <div class="progress-bar" style="width: ${porcentaje}%"></div>
+      </div>
+    `;
+  });
+  
+  document.getElementById('listaPersonasGastos').innerHTML = htmlGastosPersonas || '<p>No hay gastos por persona</p>';
+  document.getElementById('listaPersonasIngresos').innerHTML = htmlIngresosPersonas || '<p>No hay ingresos por persona</p>';
+  
+  // Resumen por tarjeta
+  const movimientosPorTarjeta = {};
+  
+  transacciones.forEach(tx => {
+    if (tx.tipo === 'traslado') {
+      if (!movimientosPorTarjeta[tx.detalles.origen]) {
+        movimientosPorTarjeta[tx.detalles.origen] = { gastos: 0, ingresos: 0, trasladosSalida: 0, trasladosEntrada: 0 };
+      }
+      if (!movimientosPorTarjeta[tx.detalles.destino]) {
+        movimientosPorTarjeta[tx.detalles.destino] = { gastos: 0, ingresos: 0, trasladosSalida: 0, trasladosEntrada: 0 };
+      }
+      
+      movimientosPorTarjeta[tx.detalles.origen].trasladosSalida += tx.monto;
+      movimientosPorTarjeta[tx.detalles.destino].trasladosEntrada += tx.monto;
+    } else {
+      if (!movimientosPorTarjeta[tx.tarjetaNombre]) {
+        movimientosPorTarjeta[tx.tarjetaNombre] = { gastos: 0, ingresos: 0, trasladosSalida: 0, trasladosEntrada: 0 };
+      }
+      
+      if (tx.tipo === 'gasto') {
+        movimientosPorTarjeta[tx.tarjetaNombre].gastos += tx.monto;
+      } else if (tx.tipo === 'abono') {
+        movimientosPorTarjeta[tx.tarjetaNombre].ingresos += tx.monto;
+      }
+    }
+  });
+  
+  let htmlTarjetas = '';
+  Object.keys(movimientosPorTarjeta).forEach(tarjeta => {
+    const datos = movimientosPorTarjeta[tarjeta];
+    const tarjetaObj = tarjetas.find(t => t.nombre === tarjeta) || { saldo: 0 };
+    
+    htmlTarjetas += `
+      <div style="margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+        <h4>${tarjeta} <span class="badge ${tarjetaObj.saldo >= 0 ? 'success' : 'danger'}">Saldo: $${tarjetaObj.saldo.toFixed(2)}</span></h4>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+          <div class="stat-card">
+            <h3>Gastos</h3>
+            <p>$${datos.gastos.toFixed(2)}</p>
+          </div>
+          <div class="stat-card">
+            <h3>Ingresos</h3>
+            <p>$${datos.ingresos.toFixed(2)}</p>
+          </div>
+          <div class="stat-card">
+            <h3>Traslados enviados</h3>
+            <p>$${datos.trasladosSalida.toFixed(2)}</p>
+          </div>
+          <div class="stat-card">
+            <h3>Traslados recibidos</h3>
+            <p>$${datos.trasladosEntrada.toFixed(2)}</p>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+  
+  document.getElementById('listaTarjetasResumen').innerHTML = htmlTarjetas || '<p>No hay movimientos por tarjeta</p>';
+  
+  // Gráfica mensual
+  const ctx = document.getElementById('graficaMensual').getContext('2d');
+  
+  // Agrupar por mes
+  const datosMensuales = {};
+  const ahora = new Date();
+  const meses = [];
+  
+  // Crear rango de últimos 12 meses
+  for (let i = 11; i >= 0; i--) {
+    const fecha = new Date(ahora.getFullYear(), ahora.getMonth() - i, 1);
+    const clave = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}`;
+    meses.push(clave);
+    datosMensuales[clave] = { gastos: 0, ingresos: 0 };
+  }
+  
+  // Procesar transacciones
+  transacciones.forEach(tx => {
+    const fecha = new Date(tx.fecha);
+    const clave = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}`;
+    
+    if (datosMensuales[clave]) {
+      if (tx.tipo === 'gasto') {
+        datosMensuales[clave].gastos += tx.monto;
+      } else if (tx.tipo === 'abono') {
+        datosMensuales[clave].ingresos += tx.monto;
+      }
+    }
+  });
+  
+  // Preparar datos para la gráfica
+  const labels = meses.map(mes => {
+    const [ano, mesNum] = mes.split('-');
+    return new Date(ano, mesNum - 1).toLocaleDateString('es', { month: 'short', year: 'numeric' });
+  });
+  
+  const datosGastos = meses.map(mes => datosMensuales[mes].gastos);
+  const datosIngresos = meses.map(mes => datosMensuales[mes].ingresos);
+  
+  // Destruir gráfica anterior si existe
+  if (window.graficaMensual) {
+    window.graficaMensual.destroy();
+  }
+  
+  // Crear nueva gráfica
+  window.graficaMensual = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Gastos',
+          data: datosGastos,
+          backgroundColor: '#dc3545'
+        },
+        {
+          label: 'Ingresos',
+          data: datosIngresos,
+          backgroundColor: '#198754'
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          stacked: false
+        },
+        y: {
+          stacked: false,
+          title: {
+            display: true,
+            text: 'Monto ($)'
+          }
+        }
+      }
+    }
+  });
+}
+
+// Event listeners
+document.getElementById('tipoTransaccion').addEventListener('change', function(e) {
+  const tarjetaDestino = document.getElementById('destino-container');
+  tarjetaDestino.style.display = e.target.value === 'traslado' ? 'block' : 'none';
+});
+
+document.getElementById('editarTipoTransaccion').addEventListener('change', function(e) {
+  const tarjetaDestino = document.getElementById('editarDestino-container');
+  tarjetaDestino.style.display = e.target.value === 'traslado' ? 'block' : 'none';
+});
+
+// Inicialización
 actualizarUI();
 </script>
 </body>
